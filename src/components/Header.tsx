@@ -1,18 +1,32 @@
-import { useLocation } from 'preact-iso';
+import {
+  Attributes,
+  Component,
+  ComponentChild,
+  ComponentChildren,
+  Ref,
+} from "preact";
+import { useLocation } from "preact-iso";
 
-export function Header() {
-	const { url } = useLocation();
+class Header extends Component {
+  render(
+    props?: Readonly<
+      Attributes & { children?: ComponentChildren; ref?: Ref<any> }
+    >,
+    state?: Readonly<{}>,
+    context?: any
+  ): ComponentChild {
+    const { url } = useLocation();
 
-	return (
-		<header>
-			<nav>
-				<a href="/" class={url == '/' && 'active'}>
-					Home
-				</a>
-				<a href="/404" class={url == '/404' && 'active'}>
-					404
-				</a>
-			</nav>
-		</header>
-	);
+    return (
+      <header>
+        <nav>
+          <a href="/" class={url == "/" && "active"}>
+            Home
+          </a>
+        </nav>
+      </header>
+    );
+  }
 }
+
+export default Header;

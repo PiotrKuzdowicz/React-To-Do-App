@@ -1,33 +1,34 @@
-import { h, VNode } from "preact";
+import { Component, h, VNode } from "preact";
 import Row from "./Row";
 import Column from "./Column";
-import ToDoItem from "../obj/ToDoItem";
-import Switch from "./Switch";
-import SwtichType from "../obj/SwtichType";
-interface TaskListProps {
+import ToDoItem from "../objects/taskItem/TaskItemDto";
+import State from "../objects/taskItem/State";
+import { signal, Signal } from "@preact/signals";
+import TaskItem from "./TaskItem";
+import TaskItemDto from "../objects/taskItem/TaskItemDto";
+interface TaskListProps  {
   className?: string;
-  taskList: ToDoItem[];
+  taskList: Signal;
 }
 
+
 export function TaskList(props: TaskListProps): VNode {
+
+  function onDelete(id:string){
+    const updatedToDoList = props.taskList.value.filter((item) => item.id !== id);
+     props.taskList.value = updatedToDoList;
+  }
+  function onUpdate(taskList:TaskItemDto[]){
+    props.taskList.value = taskList;
+  }
+
   return (
     <div className={`${props.className}`}>
-      {props.taskList.map((toDo, index) => (
-        <form key={index} className={`mt-2 border-bottom rounded border-2 ${getClasses(toDo)}`}>
-          <Row key={index}>
-            <Column className="col m-3 h6">{toDo.name}</Column>
-            <Column className="col-1 m-auto">
-              <Switch state={SwtichType.DONE} toDo={toDo} />
-            </Column>
-          </Row>
-        </form>
+      {props.taskList.value.map((toDo, index) => (
+        <TaskItem item={signal(toDo)} index={index} onDelete={onDelete} onUpdate={onUpdate}/>
       ))}
     </div>
   );
-}
-
-function getClasses(toDo){
-  return toDo.isCompleted ?'done' : 'undone';
 }
 
 export default TaskList;

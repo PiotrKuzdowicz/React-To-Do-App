@@ -1,14 +1,15 @@
-import { h, VNode } from "preact";
+import { Component, ComponentChild, h, RenderableProps, VNode } from "preact";
 
 interface ColumnProps {
   children?: VNode | VNode[] | VNode[] | string;
   className?: string;
 }
 
-export function Column(props: ColumnProps): VNode {
+class Column extends Component<ColumnProps>{
 
-  return <div class={`col ${props.className}`}>{props.children}</div>;
+  render(props?: RenderableProps<ColumnProps, any>, state?: Readonly<{}>, context?: any): ComponentChild {
+      return <div class={`col ${props.className}`}>{props.children}</div>;
+  }
 }
-
 
 export default Column;
