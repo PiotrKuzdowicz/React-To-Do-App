@@ -5,14 +5,8 @@ interface RowProps {
   className?: string;
 }
 
-class Row extends Component<RowProps> {
-  render(
-    props?: RenderableProps<RowProps, any>,
-    state?: Readonly<{}>,
-    context?: any
-  ): ComponentChild {
-    return <div class={`row ${props.className}`}>{props.children}</div>;
-  }
-}
+export const Row = (props: RowProps) => {
+  return <div class={`row ${props.className}`}>{props.children}</div>;
+};
 
 export default Row;

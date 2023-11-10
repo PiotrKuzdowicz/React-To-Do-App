@@ -5,11 +5,9 @@ interface ColumnProps {
   className?: string;
 }
 
-class Column extends Component<ColumnProps>{
+export const Column = (props: ColumnProps) => {
+  return <div class={`col ${props.className}`}>{props.children}</div>;
+};
 
-  render(props?: RenderableProps<ColumnProps, any>, state?: Readonly<{}>, context?: any): ComponentChild {
-      return <div class={`col ${props.className}`}>{props.children}</div>;
-  }
-}
 
 export default Column;

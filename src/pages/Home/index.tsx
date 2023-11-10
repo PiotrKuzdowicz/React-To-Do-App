@@ -7,14 +7,15 @@ import TaskList from "../../components/TaskList";
 import TaskForm from "../../components/TaskForm";
 import TaskItemDto from "../../objects/taskItem/TaskItemDto";
 import { signal } from "@preact/signals";
-import TaskItemService from "../../objects/taskItem/TaskItemService";
-
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 
 export function Home(): VNode {
-
-  
-  const signalTaskList = signal(TaskItemService.getAllTasks())
-
   return (
     <Container>
       <Row className="mt-5 border-bottom">
@@ -22,10 +23,10 @@ export function Home(): VNode {
       </Row>
       <Row className="mt-4">
         <Column className="col-8">
-          <TaskList  taskList={signalTaskList} />
+          <TaskList />
         </Column>
         <Column className="col-4">
-          <TaskForm toDoList={signalTaskList} />
+          <TaskForm />
         </Column>
       </Row>
     </Container>

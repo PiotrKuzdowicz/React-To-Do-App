@@ -7,15 +7,27 @@ import { NotFound } from './pages/_404.jsx';
 import './style.css';
 import getTheme from './functions/theme.js';
 import getAppVersion from './functions/appVersion.js';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { localStorageQueryClient,persister } from './functions/localStorageQueryClient.js';
 
 class App extends Component {
+
+
+
+  
   componentDidMount() {
     document.documentElement.classList.add(getTheme());
     document.documentElement.setAttribute('ver', getAppVersion());
   }
 
   render() {
+
+
     return (
+      <PersistQueryClientProvider
+        client={localStorageQueryClient}
+        persistOptions={{persister}}
+        >
         <LocationProvider>
           <Header />
           <main>
@@ -25,6 +37,7 @@ class App extends Component {
             </Router>
           </main>
         </LocationProvider>
+      </PersistQueryClientProvider>
     );
   }
 }

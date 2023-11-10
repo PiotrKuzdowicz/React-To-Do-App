@@ -1,34 +1,37 @@
-import { Component, h, VNode } from "preact";
-import Row from "./Row";
-import Column from "./Column";
-import ToDoItem from "../objects/taskItem/TaskItemDto";
-import State from "../objects/taskItem/State";
-import { signal, Signal } from "@preact/signals";
+import { Component, createContext, h, VNode } from "preact";
 import TaskItem from "./TaskItem";
-import TaskItemDto from "../objects/taskItem/TaskItemDto";
-interface TaskListProps  {
+import { useQuery } from "@tanstack/react-query";
+import { fetchTasks } from "../functions/taskApi";
+import { useState } from "preact/hooks";
+import { TaskListProvider } from "../context/TaskListContext";
+
+interface TaskListProps {
   className?: string;
-  taskList: Signal;
 }
 
+export const TaskList = (props: TaskListProps) => {
+  const { isPending, isError, data, error } = useQuery({
+    queryKey: ["taskList"],
+    queryFn: fetchTasks,
+  });
 
-export function TaskList(props: TaskListProps): VNode {
-
-  function onDelete(id:string){
-    const updatedToDoList = props.taskList.value.filter((item) => item.id !== id);
-     props.taskList.value = updatedToDoList;
+  if (isPending) {
+    return <span>Loading...</span>;
   }
-  function onUpdate(taskList:TaskItemDto[]){
-    props.taskList.value = taskList;
+
+  if (isError) {
+    return <span>Error: {error.message}</span>;
   }
 
   return (
-    <div className={`${props.className}`}>
-      {props.taskList.value.map((toDo, index) => (
-        <TaskItem item={signal(toDo)} index={index} onDelete={onDelete} onUpdate={onUpdate}/>
-      ))}
-    </div>
+    <TaskListProvider>
+      <div className={`${props.className}`}>
+        {data.map((task, index) => (
+          <TaskItem item={task} index={index} />
+        ))}
+      </div>
+    </TaskListProvider>
   );
-}
+};
 
 export default TaskList;
