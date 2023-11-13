@@ -1,7 +1,7 @@
 import { Component, createContext, h, VNode } from "preact";
 import TaskItem from "./TaskItem";
 import { useQuery } from "@tanstack/react-query";
-import { fetchTasks } from "../functions/taskApi";
+import { fetchTasks, taskKeys } from "../functions/taskApi";
 import { useState } from "preact/hooks";
 import { TaskListProvider } from "../context/TaskListContext";
 
@@ -11,7 +11,7 @@ interface TaskListProps {
 
 export const TaskList = (props: TaskListProps) => {
   const { isPending, isError, data, error } = useQuery({
-    queryKey: ["taskList"],
+    queryKey: taskKeys.all(),
     queryFn: fetchTasks,
   });
 

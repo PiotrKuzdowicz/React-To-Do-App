@@ -8,6 +8,6 @@ export const localStorageQueryClient = new QueryClient({ defaultOptions: { queri
 export const persister = createSyncStoragePersister({
   storage: window.localStorage,
   retry: removeOldestQuery,
-  serialize: data => compress(JSON.stringify(data)),
-  deserialize: data => JSON.parse(decompress(data)),
+  // serialize: data => compress(JSON.stringify(data)),
+  // deserialize: data => JSON.parse(decompress(data)),
 })

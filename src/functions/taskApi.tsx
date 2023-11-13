@@ -5,8 +5,11 @@ import State from "../objects/taskItem/State";
 import { TaskListContext } from "../context/TaskListContext";
 
 export const taskKeys = {
-  all: () => fetchTasks(),
-  detail: (id) => getTask(id),
+  all: () => ["taskList"],
+  detail: (id) => [...taskKeys.all(), id],
+  insert: () => ["insertDto"],
+  updateTask: () => ["updateTask"],
+  deleteTask: () => ["deleteTask"],
 };
 
 export const fetchTasks = () => {
@@ -38,37 +41,82 @@ export const useTaskItem = (taskItem: TaskItemDto) => {
     event.preventDefault();
     const checked = event.target.checked === false ? State.UNDONE : State.DONE;
     taskItem.state = checked;
-    updateTaskItem.mutate(taskItem);
+    updateTaskItemMutation.mutate(taskItem);
   };
 
   const deleteTaskMutation = useMutation({
-    mutationKey: taskKeys.detail(taskItem.id),
+    mutationKey: taskKeys.deleteTask(),
+    onMutate: async (taskItemId) => {
+      //Pobieram sobie dane z cache
+      const tasksInCache: TaskItemDto[] = queryClient.getQueryData(
+        taskKeys.all()
+      );
+      //Filtruje sobie dto na pozniej gdyby nie udalo sie zapisanie do localstorage, to musze w cache sobie odzyskać ten obiekt
+      const taskItemDto = tasksInCache.filter((task) => task.id === taskItemId);
+      //Filtruje sobie dane tak aby usunac ten obiekt
+      const updatedTasks = tasksInCache.filter(
+        (task) => task.id !== taskItemId
+      );
+      //Zapisuje do cache
+      queryClient.setQueryData(taskKeys.all(), updatedTasks);
+      //Zwracam w context dto na pozniej
+      return taskItemDto;
+    },
     mutationFn: async (taskItemId: string) => {
-      const oldTasks = taskKeys.all();
+      const oldTasks = fetchTasks();
       const updatedTaskList = oldTasks.filter((task) => task.id !== taskItemId);
       saveAllTasks(updatedTaskList);
-      queryClient.resetQueries({
-        queryKey: taskKeys.detail(taskItem.id),
-        exact: true,
-      });
-      updateList();
+      return updatedTaskList
+    },
+    onError: (error, variables, context) => {
+      //Jak sie nie udalo to przywracam z do cache dane
+      queryClient.setQueryData(taskKeys.all(), ((old:TaskItemDto[]) => {
+      return [...old,...context]
+      }),);
+    },
+    onSuccess: (result, variables, context) => {
+      //Jak sie udalo to zapisuje dane z localstorage to cache
+      queryClient.setQueryData(taskKeys.all(), result);
     },
   });
 
-  const updateTaskItem = useMutation({
-    mutationKey: taskKeys.detail(taskItem.id),
-    mutationFn: async (taskItem: TaskItemDto) => {
-      const oldTasks = taskKeys.all();
-
-      setTaskItemState(taskItem.state);
+  const updateTaskItemMutation = useMutation({
+    mutationKey: taskKeys.updateTask(),
+    onMutate: async (taskItemDto) => {
+      // Pobieram aktualne dane z cache
+      const tasksInCache: TaskItemDto[] = queryClient.getQueryData(
+        taskKeys.all()
+      );
+      await queryClient.cancelQueries({ queryKey: taskKeys.all() });
+      // Podmieniam aktualne dane
+      const updatedData = tasksInCache.map((task) => {
+        if (task.id === taskItemDto.id) {
+          return { ...task, ...taskItemDto };
+        }
+        return task;
+      });
+      // Zapisuje do cache
+      queryClient.setQueryData(taskKeys.all(), updatedData);
+      return { taskItemDto };
+    },
+    mutationFn: async (taskItemDto: TaskItemDto) => {
+      const oldTasks = fetchTasks();
       const updatedTasks = oldTasks.map((task) => {
-        if (task.id === taskItem.id) {
-          return { ...task, ...taskItem };
+        if (task.id === taskItemDto.id) {
+          return { ...task, ...taskItemDto };
         }
         return task;
       });
 
       saveAllTasks(updatedTasks);
+      return taskItemDto;
+    },
+    onSuccess: (result, variables, context) => {
+      queryClient.setQueryData(taskKeys.all(), (old: TaskItemDto[]) =>
+        old.map((taskDto) =>
+          taskDto.id === context.taskItemDto.id ? result : taskDto
+        )
+      );
     },
   });
 
@@ -89,19 +137,39 @@ export const useTaskForm = () => {
     }
     const newTaskItemDto = new TaskItemDto(taskName, State.UNDONE);
     insertTaskMutation.mutate(newTaskItemDto);
-    formData.set('taskNameInput','')
+    formData.set("taskNameInput", "");
   };
 
   const insertTaskMutation = useMutation({
-    mutationKey: ["insertDto"],
+    mutationKey: taskKeys.insert(),
+    onMutate: async (taskItemDto) => {
+      // Pobieram aktualne dane z cache
+      const tasksInCache: TaskItemDto[] = queryClient.getQueryData(
+        taskKeys.all()
+      );
+      await queryClient.cancelQueries({ queryKey: taskKeys.all() });
+      // Podmieniam aktualne dane
+      tasksInCache.push(taskItemDto);
+      // Zapisuje do cache
+      queryClient.setQueryData(taskKeys.all(), tasksInCache);
+
+      return { taskItemDto };
+    },
     mutationFn: async (taskItemDto: TaskItemDto) => {
-      const taskList = taskKeys.all();
+      const taskList = fetchTasks();
       taskList.push(taskItemDto);
       saveAllTasks(taskList);
-      return true;
+      return taskItemDto;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(taskKeys.all());
+    onSuccess: (result, variables, context) => {
+
+      queryClient.setQueryData(taskKeys.all(), (old: TaskItemDto[]) =>
+      old.map((taskDto) =>
+        taskDto.id === context.taskItemDto.id ? result : taskDto
+      )
+    );
+    queryClient.invalidateQueries({queryKey: taskKeys.all()})
+
     },
   });
 
